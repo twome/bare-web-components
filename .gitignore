@@ -1,0 +1,30 @@
+# Security
+## Env vars that contain passwords, are context-dependent etc
+.env
+
+# Windows
+## Image thumbnail cache
+Thumbs.db
+## Folder config file
+Desktop.ini
+
+# Mac
+## Image thumbnail cache
+.DS_Store
+
+# Sublime Text
+## User-specific editor settings
+*.sublime-project
+*.sublime-workspace
+
+# Yarn
+## Error log
+yarn-error.log
+
+# Node.js
+## Package manager content and logs
+node_modules/
+npm-debug.log
+
+# A folder specifically for ignored scrap
+ignored/
