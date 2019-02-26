@@ -54,7 +54,7 @@ class KeyMeta {
 
 /*
 	Each ReactiveProxy only stores reactive properties one level deep (its own direct children). 
-	It recursively makes its extensible (property-having) children ReactiveProxies before 
+	It recursively makes its extensible (property-having) children ReactiveProxies before adding them it its own properties.
 */
 class ReactiveProxy {
 	constructor(targetObj, watchersToAssign){

@@ -1,0 +1,24 @@
+{
+  "//a": "This is for live-linting the browser code in editors/IDEs only.",
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "browser": true
+    },
+    "parserOptions": {
+      "sourceType": "module",
+      "ecmaVersion": 2018
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+      "no-unused-vars": 0,
+      "no-console": 0,
+      "no-mixed-spaces-and-tabs": 0
+    }
+  },
+  "eslintIgnore": [
+    "images/",
+    "fonts/",
+    "scripts/vendor/"
+  ]
+}

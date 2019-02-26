@@ -23,7 +23,7 @@ a very basic Virtual DOM:
 - outerhtml
 
 for deep live-objects, make each property **return a live-object** that also has the next net of properties.
-each accessor (. or []) is string of chained functions, like a lambda or whatever 
+each accessor (. or []) is string of chained function calls, like a lambda or whatever 
 
 liveObject.prop1.subProp
 

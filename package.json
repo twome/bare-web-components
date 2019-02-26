@@ -1,18 +1,70 @@
 {
-	"name": "reactive-object",
-	"version": "0.0.1",
-	"description": "Create a JS object that automatically run functions when any of its properties change. Implemented using inbuilt Proxy. Requires use with 'Watcher' class (also provided).",
-	"homepage": "https://gitlab.com/twome/reactive-object",
-	"bugs": "https://gitlab.com/twome/reactive-object/issues",
-	"license": "MIT",
-	"author": "Tom Kenny <tom@twome.name> (https://twome.name)",
-	"main": "reactive-object.js",
-	"repository": "https://gitlab.com/twome/reactive-object.git",
-	"private": true,
-	"scripts": {
-		"test": "test/test.js"
-	},
-	"dependencies": {
-		"lodash-es": "^4.17.11"
-	}
+  "private": true,
+  "engines": {
+    "node": ">=11"
+  },
+  "dependencies": {
+    "lodash-es": "^4.17.11"
+  },
+  "browserslist": [
+    "last 3 versions",
+    "> 1%"
+  ],
+  "scripts": {
+    "build": "node -r esm build.js",
+    "serve": "live-server dist --port=\"8082\"",
+    "test": "echo \"No tests available yet.\""
+  },
+  "devDependencies": {
+    "autoprefixer": "^9.4.2",
+    "cssnano": "^4.1.7",
+    "del": "^3.0.0",
+    "dotenv": "^6.1.0",
+    "eslint": "^5.6.1",
+    "esm": "^3.0.84",
+    "gulp": "^4.0.0",
+    "gulp-debug": "^4.0.0",
+    "gulp-eslint": "^5.0.0",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-imagemin": "^5.0.3",
+    "gulp-insert": "^0.5.0",
+    "gulp-postcss": "^8.0.0",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-template": "^5.0.0",
+    "html-webpack-plugin": "^3.2.0",
+    "live-server": "^1.2.1",
+    "parcel-bundler": "^1.10.3",
+    "postcss-import": "^12.0.1",
+    "postcss-modules": "^1.4.1",
+    "postcss-normalize": "^7.0.1",
+    "postcss-preset-env": "^6.5.0",
+    "postcss-scss": "^2.0.0",
+    "precss": "^4.0.0",
+    "string-to-stream": "^1.1.1",
+    "vinyl": "^2.2.0",
+    "vinyl-buffer": "^1.0.1",
+    "vinyl-named": "^1.1.0",
+    "vinyl-source-stream": "^2.0.0"
+  },
+  "//a": "This is for the server & client-building code only; browser code is linted in build.js",
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    },
+    "parserOptions": {
+      "sourceType": "module",
+      "ecmaVersion": 2018
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+      "no-unused-vars": 0,
+      "no-console": 0,
+      "no-mixed-spaces-and-tabs": 0
+    }
+  },
+  "eslintIgnore": [
+    "ignored/",
+    "peer_modules/"
+  ]
 }

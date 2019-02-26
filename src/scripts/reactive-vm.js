@@ -17,7 +17,7 @@ class ReactiveVm {
 		methods = {}
 	}={}){
 		this.opt = {el, data, methods} // Save initial args into options object
-		
+
 		if (typeof el === 'string'){
 			const foundEls = document.querySelectorAll(el)
 			el = foundEls[0]
