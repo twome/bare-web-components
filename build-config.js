@@ -1,6 +1,6 @@
 // 3rd-party dependencies
 require('dotenv').config() // We only need side-effects on: process.env
-import { Enum } from './peer_modules/enum/enum.js'
+import Enum from './peers/enum.js'
 
 let isInteger = (string, min, max) => {
 	let int = Number(string)

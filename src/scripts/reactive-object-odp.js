@@ -6,9 +6,9 @@
 */
 
 // 3rd-party
-import cloneDeep from '../node_modules/lodash-es/cloneDeep.js'
-import last from '../node_modules/lodash-es/last.js'
-import template from '../node_modules/lodash-es/template.js'
+import cloneDeep from '../../node_modules/lodash-es/cloneDeep.js'
+import last from '../../node_modules/lodash-es/last.js'
+import template from '../../node_modules/lodash-es/template.js'
 
 const _ = { cloneDeep, last, template }
 

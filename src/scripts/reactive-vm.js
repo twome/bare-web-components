@@ -1,7 +1,6 @@
 // In-house 
-import { c, ce, ci, cw, info3 } from './util.js'
-import { Stack } from '../../util-iso.js'
-import { ReactiveProxy } from '../../reactive-object/reactive-object.js'
+import { Stack } from './util-iso.js'
+import { ReactiveProxy, Watcher } from './reactive-object.js'
 
 /*
 	Wrapper around ReactiveProxy which binds it to a DOM element, in order to use the ReactiveProxy as a "viewmodel"
@@ -10,13 +9,13 @@ import { ReactiveProxy } from '../../reactive-object/reactive-object.js'
 	instance, because the constructor returns a non-instance object (the user
 	cannot ever access the instance itself with `this`). Should we refactor/rename this?
 */
-class ReactiveVm {
+export class ReactiveVm {
 	constructor({
 		el = {},
 		data = {},
 		methods = {}
 	}={}){
-		this.opt = {el, data, methods} // Save initial args into options object
+		const opt = {el, data, methods} // Save initial args into options object
 
 		if (typeof el === 'string'){
 			const foundEls = document.querySelectorAll(el)
@@ -32,23 +31,24 @@ class ReactiveVm {
 			throw Error('[ReactiveVm] needs an active HTMLElement object or a selector string which identifies to a unique HTMLElement as its `el` property.')
 		}
 
-		this.watcherStack = new Stack()
+		let watcherStack = new Stack()
 
-		this._vm = ReactiveProxy(data, this.watcherStack)
+		let vm = new ReactiveProxy(data, watcherStack)
 
 		// Attach methods with '$' prefix to root of reactive vm object
-		methods.forEach((fn, key)=>{
-			if (this._vm[key] === undefined){
-				this._vm['$' + key] = fn.bind(this)
+		for (let key in opt.methods){
+			let fn = opt.methods[key]
+			if (vm[key] === undefined){
+				vm['$' + key] = fn
 			} else {
 				throw Error(`[ReactiveVm] Property ${key} already exists; can't attach method of same name.`)
 			}
-		})
+		}
 
 		// Helper properties for user
-		this._vm['$data'] = data
-		this._vm['$el'] = el
+		vm['$data'] = data
+		vm['$el'] = el
 		
-		return this._vm
+		return vm
 	}
 }

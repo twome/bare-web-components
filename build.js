@@ -15,6 +15,7 @@ const Vinyl = require('vinyl')
 const asyncDone = require('async-done')
 import template from './node_modules/lodash-es/template.js'
 const liveServer = require('live-server')
+const dependencyTree = require('dependency-tree')
 
 // ## Gulp & plugins
 const gulp = require('gulp')
@@ -42,7 +43,7 @@ console.info('Module imports finished.')
 
 // In-house
 const { parseConfigs, envs } = require('./build-config.js')
-import throttle from './peer_modules/throttle/throttle.js'
+import throttle from './peers/throttle.js'
 
 // Parse environment variable & command-line config settings into a config object (passing in app defaults)
 let config = parseConfigs({
@@ -69,35 +70,35 @@ let makeGulpStream = (fileName)=>{
 let paths = {
 	// Non-source / machine output:
 	cache: p(__dirname, '.cache'),
-	temp: p(__dirname, 'ignored/unpackaged'), // Where we send the pre-processed site before bundling with Parcel. Dev server should be able to run here.
+	temp: p(__dirname, '.tmp'), // Where we send the pre-processed site before bundling with Parcel. Dev server should be able to run here.
 	dist: p(__dirname, 'dist'), // Distribution - the final site to publically upload.
 
 	// Source files:
 	raw: p(__dirname, 'raw'), // Static assets that don't need processing before serving
 	html: {
 		src: p(__dirname, 'src/views'),
-		temp: p(__dirname, 'ignored/unpackaged'),
+		temp: p(__dirname, '.tmp'),
 		dest: p(__dirname, 'dist')
 	},
 	css: {
 		src: p(__dirname, 'src/styles'),
-		temp: p(__dirname, 'ignored/unpackaged/styles')
+		temp: p(__dirname, '.tmp/styles')
 	},
 	js: {
 		src: p(__dirname, 'src/scripts'),
-		temp: p(__dirname, 'ignored/unpackaged/scripts')
+		temp: p(__dirname, '.tmp/scripts')
 	},
 	images: {
 		src: p(__dirname, 'src/images'),
-		temp: p(__dirname, 'ignored/unpackaged/images')
+		temp: p(__dirname, '.tmp/images')
 	},
 	sounds: {
 		src: p(__dirname, 'src/sounds'),
-		temp: p(__dirname, 'ignored/unpackaged/sounds')
+		temp: p(__dirname, '.tmp/sounds')
 	},
 	fonts: {
 		src: p(__dirname, 'src/fonts'),
-		temp: p(__dirname, 'ignored/unpackaged/fonts')
+		temp: p(__dirname, '.tmp/fonts')
 	}
 }
 
@@ -220,11 +221,22 @@ let jsTask = () => {
 
 // A monkey-patch for a Parcel output bug wherein a global 'parcelRequire' is assigned w/o being declared first.
 let parcelPatchTask = ()=>{
-	console.debug('PATCHING PARCEL')
+	console.debug('Patching Parceled scripts...')
 	let stream = gulp.src(p(paths.dist, '**/*.js'))
 	return stream.pipe(gInsert.prepend(';window.parcelRequire = undefined;\n'))
 		.pipe(gDebug({title: 'patching parceled JS'}))
 		.pipe(gulp.dest(paths.dist))
+}
+
+// TODO
+// This just imports unpublished node modules to a version controlled directory so it's always available a development dependency
+// Basically this is like a git submodule, without the git
+let dependencyTask = ()=>{
+	let tree = dependencyTree({
+		filename: p(paths.html.temp, 'index.html')
+	})
+
+	// TODO: do a simple filesystem copy of dependencies into <projectroot>/peers
 }
 
 let parcelTask = ()=>{
@@ -235,7 +247,7 @@ let parcelTask = ()=>{
 		outDir: paths.dist,
 		publicUrl: '/',
 		hmr: false,
-		global: 'parcelGlobal',
+		// global: 'parcelGlobalNamespace',
 		// watch: false,
 		contentHash: !inDev,
 		minify: !inDev,
@@ -243,11 +255,13 @@ let parcelTask = ()=>{
 		cacheDir: p(paths.cache, 'parcel')
 	}
 	let bundler = new parcel(entryFiles, options)
+	// bundler.on('bundled', ()=>{
+	// 	console.info('~~~ Bundle finished')
+	// })
 	
 	let bundle = bundler.bundle()
 
 	bundle.then(bundleObj => {
-		bundleObj.assets.forEach(asset => console.debug(asset.name))
 		// Successfully wrote new file
 		return parcelPatchTask()
 	}, err => {
@@ -290,7 +304,7 @@ let serverTask = () => {
 
 	return new Promise(()=>{ // Will never resolve/reject
 		liveServer.start({
-			root: !inDev ? paths.dist : paths.temp,
+			root: !inDev ? paths.dist : paths.dist,
 			host: hostname,
 			port: port,
 			open: false,
@@ -403,7 +417,8 @@ let devWorkflow = gulp.series(
 		rawTask,
 		fontsTask,
 		imagesTask,
-		soundsTask
+		soundsTask,
+		parcelTask
 	),
 	gulp.parallel(
 		cssWatch,
@@ -412,6 +427,7 @@ let devWorkflow = gulp.series(
 		rawWatch,
 		fontsWatch,
 		imagesWatch,
+		parcelWatch,
 		serverTask
 	),
 )

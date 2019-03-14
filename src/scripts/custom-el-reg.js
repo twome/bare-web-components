@@ -1,5 +1,9 @@
+/*
+	Custom element registry
+*/
 /* side-effects: true */
-import { d, w, c, ce, ci } from './util.js'
+
+let d = document, w = window
 
 // Get a reference to the "classed" version of every instance (DOM element) of each custom element we've made
 let registerDOMNodesToCustomEls = (customEls, existingInstances)=>{

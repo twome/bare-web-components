@@ -4,6 +4,7 @@
     "node": ">=11"
   },
   "dependencies": {
+    "dependency-tree": "^7.0.2",
     "lodash-es": "^4.17.11"
   },
   "browserslist": [
@@ -65,6 +66,6 @@
   },
   "eslintIgnore": [
     "ignored/",
-    "peer_modules/"
+    "peers/"
   ]
 }

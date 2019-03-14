@@ -28,3 +28,7 @@ npm-debug.log
 
 # A folder specifically for ignored scrap
 ignored/
+
+# Build process
+.tmp/
+.cache/

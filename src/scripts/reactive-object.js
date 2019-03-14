@@ -1,12 +1,19 @@
 // 3rd-party
-import cloneDeep from './node_modules/lodash-es/cloneDeep.js'
-import last from './node_modules/lodash-es/last.js'
-import isEqual from './node_modules/lodash-es/isEqual.js'
-import template from './node_modules/lodash-es/template.js'
+import cloneDeep from '../../node_modules/lodash-es/cloneDeep.js'
+import last from '../../node_modules/lodash-es/last.js'
+import isEqual from '../../node_modules/lodash-es/isEqual.js'
+import template from '../../node_modules/lodash-es/template.js'
 
 // In-house 
-import { c, ce, ci, cw, info3, info2 } from '../browser/js/util.js'
-import { Stack } from '../util-iso.js'
+import { Stack } from './util-iso.js'
+
+let c = console.debug
+let ce = console.error
+let ci = console.info
+let cw = console.warn
+let info2 = console.info // TODO delete
+let info3 = console.info // TODO delete
+
 
 // This is the meta-information for the value of a reactive object's property. It has its own list of Watchers 
 // (much like a Publisher) which it notifies whenever its internal value changes.
@@ -73,9 +80,16 @@ class ReactiveProxy {
 	*/
 	walk(target){
 		for (let [key, child] of Object.entries(target)){
-			// Anything that *can* have properties, we want to shim with a proxy so we can track those properties 
-			// with a KeyMeta
-			if (Object.isExtensible(child)){
+			if (typeof child === 'function'){
+				// TODO - how do we deal with functions?
+			}
+			if (key.match(/^\$/)){ // Special prefix to make plain objects/functions
+				// TODO - do nothing?
+				console.debug('plain $ prefix:', key)
+			} else if (Object.isExtensible(child)){
+				// Anything that *can* have properties, we want to shim with a proxy so we can track those properties 
+				// with a KeyMeta
+
 				// Deep-recurse from the bottom up, overwriting any objects with Proxies
 				target[key] = new ReactiveProxy(child) 
 			}
@@ -93,10 +107,10 @@ class ReactiveProxy {
 			get: (target, key, receiver)=>{
 				/*
 					Affects:
-						 `[]` accessor operator
+						`[]` accessor operator
 						`.` accessor operator
 				*/
-				info3(`TRAP --- get. getting key:`, key)
+				// info3(`TRAP --- get. getting key:`, key)
 				let retrievedValue = this.getKeyValue(target, key)
 				return retrievedValue
 			},
@@ -106,7 +120,7 @@ class ReactiveProxy {
 						`=` operator
 						Array.push()
 				*/
-				info3(`TRAP --- set. setting $key to $value:`, key, value)
+				// info3(`TRAP --- set. setting $key to $value:`, key, value)
 				this.setKeyValue(target, key, value, this.getMeta(key, target))
 				return true
 			},
@@ -115,7 +129,7 @@ class ReactiveProxy {
 					Affects:
 						Object.defineProperty()
 				*/
-				info3('TRAP --- defineProperty. descriptor:', descriptor)
+				// info3('TRAP --- defineProperty. descriptor:', descriptor)
 				if ('value' in descriptor){ // Data descriptor
 					this.setKeyValue(target, key, descriptor.value, this.getMeta(key, target), descriptor)
 					return true
@@ -135,17 +149,18 @@ class ReactiveProxy {
 						`delete` operator
 						Array.pop() ?
 				*/
-				info3('TRAP --- deleteProperty. key:', key)
+				// info3('TRAP --- deleteProperty. key:', key)
 				this.deleteKey(target, key, this.getMeta(key, target))
 			},
 			getOwnPropertyDescriptor: (target, key)=>{
+				// TODO: does this do anything different to the default? can we just remove this?
 				/*
 					Affects:
 						Object.getOwnPropertyDescriptor(),
 						Object.keys(),
 						anObject.hasOwnProperty(),
 				*/
-				info3('TRAP --- getOwnPropertyDescriptor', key)
+				// info3('TRAP --- getOwnPropertyDescriptor', key)
 				let originalDescriptor = Object.getOwnPropertyDescriptor(target, key)
 				return originalDescriptor
 			}
@@ -160,7 +175,7 @@ class ReactiveProxy {
 
 		let metasKey = key
 		if (typeof key === 'string' && key in this.metas){
-			// Need this to stop clashing with pre-existing properties of this.metas like Array.length or .push()
+			// Need this to stop clashing with pre-existing properties of the this.metas object like Array.length or .push()
 			metasKey = ReactiveProxy.metasNamespace + key
 		}
 
@@ -236,7 +251,7 @@ class ReactiveProxy {
 
 
 /*
-	dependentProcess(): a function which returns a value. This function can *depend on* the properties of a reactive object, and so
+	dependentProcess(oldOutput): a function which returns a value. This function can *depend on* the properties of a reactive object, and so
 	each time those reactive properties change, this function is run again to "refresh" its output value. This is basically like
 	a "render" function for a template, (and was made for that purpose), but can be used more abstractly.
 
@@ -250,8 +265,7 @@ class Watcher {
 
 		// Static properties
 		Watcher.stack = Watcher.stack || new Stack()
-
-		this.watcherStack = watcherStack || Watcher.stack 
+		watcherStack = watcherStack || Watcher.stack
 
 		this.dependentOutput = null
 		this.update() // Runs the process using initial values
@@ -263,7 +277,7 @@ class Watcher {
 		this.watcherStack.push(this) // We add this watcher as the current target for the active Dep instance
 		// Call the dependentProcess, which uses reactive properties to output something (like a component's HTML)
 		this.dependentOutput = this.dependentProcess(oldOutput)
-		c(this.dependentOutput)
+
 		if (this.dependentOutput instanceof Promise){
 			this.dependentOutput.then(val => {
 				this.dependentOutput = val
