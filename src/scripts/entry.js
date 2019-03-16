@@ -17,10 +17,10 @@ let objA = {
 	}
 }
 
-let watcher = new Watcher(oldOutput => {
-	let value = objA.aDeeperObject.aNumericalProp
-	console.debug('Watcher noticed a change in the value it was watching!', value)
-})
+// let watcher = new Watcher(oldOutput => {
+// 	let value = objA.aDeeperObject.aNumericalProp
+// 	console.debug('Watcher noticed a change in the value it was watching!', value)
+// })
 
 document.addEventListener('DOMContentLoaded', ()=>{
 
@@ -40,8 +40,9 @@ let reactiveDom = new ReactiveVm({
 
 console.debug('say chungus please', reactiveDom.$sayChungus())
 
-}) // DOMContentLoaded
 
 
 // Bind to window for REPL use
 window.r = reactiveDom
+
+}) // DOMContentLoaded

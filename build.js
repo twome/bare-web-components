@@ -217,17 +217,6 @@ let jsTask = () => {
 		.pipe(gulp.dest(paths.js.temp))	
 }
 
-
-
-// A monkey-patch for a Parcel output bug wherein a global 'parcelRequire' is assigned w/o being declared first.
-let parcelPatchTask = ()=>{
-	console.debug('Patching Parceled scripts...')
-	let stream = gulp.src(p(paths.dist, '**/*.js'))
-	return stream.pipe(gInsert.prepend(';window.parcelRequire = undefined;\n'))
-		.pipe(gDebug({title: 'patching parceled JS'}))
-		.pipe(gulp.dest(paths.dist))
-}
-
 // TODO
 // This just imports unpublished node modules to a version controlled directory so it's always available a development dependency
 // Basically this is like a git submodule, without the git
@@ -255,18 +244,11 @@ let parcelTask = ()=>{
 		cacheDir: p(paths.cache, 'parcel')
 	}
 	let bundler = new parcel(entryFiles, options)
-	// bundler.on('bundled', ()=>{
-	// 	console.info('~~~ Bundle finished')
-	// })
+	bundler.on('bundled', ()=>{
+		console.info('~~~ Bundle finished')
+	})
 	
 	let bundle = bundler.bundle()
-
-	bundle.then(bundleObj => {
-		// Successfully wrote new file
-		return parcelPatchTask()
-	}, err => {
-		throw err
-	})
 
 	return bundle // Promise
 }

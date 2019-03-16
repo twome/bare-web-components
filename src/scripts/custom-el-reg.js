@@ -3,21 +3,17 @@
 */
 /* side-effects: true */
 
-let d = document, w = window
-
 // Get a reference to the "classed" version of every instance (DOM element) of each custom element we've made
-let registerDOMNodesToCustomEls = (customEls, existingInstances)=>{
+export let registerDOMNodesToCustomEls = (customElClasses, existingInstances)=>{
 	let customElInstances = existingInstances || new Map()
-	for (let customEl of customEls){
-		if (! customElInstances.get(customEl)) customElInstances.set(customEl, [])
-		let instancesForElType = customElInstances.get(customEl)
-		d.querySelectorAll(customEl.selector).forEach(el => {
-			let classedEl = new customEl(el)
-			instancesForElType.push(classedEl)
-			customElInstances.set(customEl, instancesForElType)
+	for (let type of customElClasses){
+		if (! customElInstances.get(type)) customElInstances.set(type, [])
+		let instancesOfType = customElInstances.get(type)
+		document.querySelectorAll(type.selector).forEach(el => {
+			let classedEl = new type(el)
+			instancesOfType.push(classedEl)
 		})	
+		customElInstances.set(type, instancesOfType)
 	}
 	return customElInstances
 }
-
-export { registerDOMNodesToCustomEls }

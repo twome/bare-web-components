@@ -32,3 +32,6 @@ ignored/
 # Build process
 .tmp/
 .cache/
+
+# Machine-generated output
+dist/
