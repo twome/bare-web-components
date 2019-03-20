@@ -10,6 +10,7 @@ export let registerDOMNodesToCustomEls = (customElClasses, existingInstances)=>{
 		if (! customElInstances.get(type)) customElInstances.set(type, [])
 		let instancesOfType = customElInstances.get(type)
 		document.querySelectorAll(type.selector).forEach(el => {
+			// Here we instatiate every HTMLElement into its custom class
 			let classedEl = new type(el)
 			instancesOfType.push(classedEl)
 		})	

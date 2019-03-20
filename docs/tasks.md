@@ -1,7 +1,5 @@
 # Learn the Web Components spec APIs and create a simple "reactive" UI framework that handles rendering from a viewmodel, through a virtual DOM, and into the real DOM, and then watches the viewmodel in order to re-render. User input in the rendered components directly modifies the viewmodel.
 
-Great practice and probably useful "software design" example for portfolio
-
 What we'll need:
 
 - [x] Learn Proxies to watch vm object for changes (trigger a render), 
@@ -13,6 +11,9 @@ What we'll need:
 		- add a 'forComponent: ' property to each Watcher, so that each KeyMeta's watcher list then contains a list of every component instance that is watching the (unknowable beforehand) VM props that it needs to access
 		-
 		- do we need the proxy itself to be a reactive property?
+		- first we need to simply call a method
+		- second we need to run a watcher around a {{}} in a text node
+		- third we need to run a watcher around attribute values
 	- Learn <template> and <slot name="foo"> / [slot="foo"]
 	- Learn HTML imports "include for the web"
 	- use Lodash/ERB template syntax? no, that won't parse as valid html (does it need to if we're processing it as static text?). will need to use custom attributes (not data-) and es6 template literals `${}` or handlebars-esque `{{}}` within text nodes and attribute value strings.
@@ -34,4 +35,4 @@ each accessor (. or []) is string of chained function calls, like a lambda or wh
 
 liveObject.prop1.subProp
 
-[ ] 
+[ ]

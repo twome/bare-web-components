@@ -1,6 +1,7 @@
 // In-house 
 import { Stack } from './util-iso.js'
-import { ReactiveProxy, Watcher } from './reactive-object.js'
+import { ReactiveProxy } from './reactive-object.js'
+import throttle from '../../peers/throttle.js'
 
 /*
 	Wrapper around ReactiveProxy which binds it to a DOM element, in order to use the ReactiveProxy as a "viewmodel"
@@ -11,44 +12,57 @@ import { ReactiveProxy, Watcher } from './reactive-object.js'
 */
 export class ReactiveVm {
 	constructor({
-		el = {},
+		el,
+		watcherStack,
 		data = {},
 		methods = {}
 	}={}){
-		const opt = {el, data, methods} // Save initial args into options object
+		this.opt = {el, data, methods} // Save initial args into options object
 
-		if (typeof el === 'string'){
-			const foundEls = document.querySelectorAll(el)
-			el = foundEls[0]
-			if (foundEls.length >= 2){
-				console.error('[ReactiveVm] Matched elements:', foundEls)
-				throw Error('[ReactiveVm] Needs a *unique* selector; you provided a selector that matches >1 page elements.')
-			}
-		}
 		if (el instanceof HTMLElement){
 			this.el = el
 		} else {
-			throw Error('[ReactiveVm] needs an active HTMLElement object or a selector string which identifies to a unique HTMLElement as its `el` property.')
+			throw Error('[ReactiveVm] needs an active HTMLElement object as its `el` property.')
 		}
 
-		let watcherStack = new Stack()
+		this.watcherStack = watcherStack
 
-		let vm = new ReactiveProxy(data, watcherStack)
+		let reactiveProxy = new ReactiveProxy(data, this.watcherStack)
 
-		// Attach methods with '$' prefix to root of reactive vm object
-		for (let key in opt.methods){
-			let fn = opt.methods[key]
-			if (vm[key] === undefined){
-				vm['$' + key] = fn
+		// Elements whose referenced values (KeyMetas) have changed since last render
+		this.dirtyEls = []
+
+		this.attemptRender = throttle(this.renderPass, 1000, true)
+
+		this.methods = {}
+		for (let key in methods){
+			let inputFn = methods[key]
+			let fnWithVmReference = (...args)=>{
+				inputFn(reactiveProxy, ...args)
+			}
+			if (this.methods[key] === undefined){
+				this.methods[key] = fnWithVmReference
 			} else {
 				throw Error(`[ReactiveVm] Property ${key} already exists; can't attach method of same name.`)
 			}
 		}
-
-		// Helper properties for user
-		vm['$data'] = data
-		vm['$el'] = el
 		
-		return vm
+		this.vm = reactiveProxy
+	}
+
+	renderPass(){
+		console.debug('TODO: render pass here')
+		console.debug(this.dirtyEls)
+		this.dirtyEls.forEach(dirtyEl => {
+			let renderOutput = dirtyEl.soloRender()
+		})
+		this.dirtyEls = []
+	}
+
+	render(/*HTMLElement or custom class*/newDirtyEls){
+		// Remember that the following elements tried to render since last pass
+		this.dirtyEls = [...this.dirtyEls, ...newDirtyEls]
+
+		this.attemptRender()
 	}
 }

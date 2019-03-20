@@ -3,8 +3,6 @@ import cloneDeep from '../../node_modules/lodash-es/cloneDeep.js'
 import last from '../../node_modules/lodash-es/last.js'
 import isEqual from '../../node_modules/lodash-es/isEqual.js'
 import template from '../../node_modules/lodash-es/template.js'
-
-// In-house 
 import { Stack } from './util-iso.js'
 
 let c = console.debug
@@ -14,10 +12,9 @@ let cw = console.warn
 let info2 = console.info // TODO delete
 let info3 = console.info // TODO delete
 
-
 // This is the meta-information for the value of a reactive object's property. It has its own list of Watchers 
 // (much like a Publisher) which it notifies whenever its internal value changes.
-class KeyMeta {
+export class KeyMeta {
 	constructor(key){
 		this.previousValue = undefined
 		this.value = undefined
@@ -29,7 +26,7 @@ class KeyMeta {
 	set(value){
 		this.previousValue = this.value
 		this.value = value
-		this.notifyDependants()
+		this.notifyWatchers()
 		return this
 	}
 
@@ -39,7 +36,7 @@ class KeyMeta {
 		if (last(watcherStack)){
 			this.dependants.add(last(watcherStack)) // Add this dependency to the current target watcher
 		} else {
-			info3('[KeyMeta] Accessed property at $key without having any active watchers.', this.key)
+			info3('No active watchers for:', this.key)
 		}
 	}
 
@@ -47,8 +44,8 @@ class KeyMeta {
 		keyMeta.dependants.remove(watcher)
 	}
 
-	notifyDependants(){
-		info2(`[KeyMeta] Property has changed value at key:`, this.key)
+	notifyWatchers(){
+		info2(`Notifying:`, this.key, this.dependants)
 		let renderOutputs = Object.entries(this.dependants).map((dependant, key) => {
 			// Allow the dependants to tell us when they're done (if they're asynchronous),
 			// so we can choose to perform something
@@ -63,11 +60,12 @@ class KeyMeta {
 	Each ReactiveProxy only stores reactive properties one level deep (its own direct children). 
 	It recursively makes its extensible (property-having) children ReactiveProxies before adding them it its own properties.
 */
-class ReactiveProxy {
-	constructor(targetObj, watchersToAssign){
-		this.watchersToAssign = watchersToAssign || Watcher.stack
-		this.metas = {}
+export class ReactiveProxy {
+	constructor(targetObj, watcherStackForKeyMetas = new Stack()){
+		this.watcherStackForKeyMetas = watcherStackForKeyMetas
 		this.originalObj = targetObj
+
+		this.metas = {}
 
 		ReactiveProxy.metasNamespace = '_reactiveVmNamespace_'
 
@@ -216,7 +214,7 @@ class ReactiveProxy {
 			info3(`[ReactiveProxy] Target property "${key}" was changed without updating its KeyMeta (or notifying its dependants)`)
 		}
 
-		keyMeta.subscribeCurrentWatcher(this.watchersToAssign)
+		keyMeta.subscribeCurrentWatcher(this.watcherStackForKeyMetas)
 		return target[key]
 	}
 
@@ -247,47 +245,3 @@ class ReactiveProxy {
 		keyMeta.set(undefined)
 	}
 }
-
-
-
-/*
-	dependentProcess(oldOutput): a function which returns a value. This function can *depend on* the properties of a reactive object, and so
-	each time those reactive properties change, this function is run again to "refresh" its output value. This is basically like
-	a "render" function for a template, (and was made for that purpose), but can be used more abstractly.
-
-	watcherStack: this is a global-like array of potential watchers that are added to each reactive property's *internal* list of
-	subscribers as that reactive property is running its *getter* function. The watcher stack is filled up emphemerally and then 
-	depleted for each individual reactive property.
-*/
-class Watcher {
-	constructor(dependentProcess, watcherStack){
-		this.dependentProcess = dependentProcess
-
-		// Static properties
-		Watcher.stack = Watcher.stack || new Stack()
-		watcherStack = watcherStack || Watcher.stack
-
-		this.dependentOutput = null
-		this.update() // Runs the process using initial values
-	}
-
-	update(){
-		const oldOutput = this.dependentOutput
-
-		this.watcherStack.push(this) // We add this watcher as the current target for the active Dep instance
-		// Call the dependentProcess, which uses reactive properties to output something (like a component's HTML)
-		this.dependentOutput = this.dependentProcess(oldOutput)
-
-		if (this.dependentOutput instanceof Promise){
-			this.dependentOutput.then(val => {
-				this.dependentOutput = val
-				this.watcherStack.pop()
-			})
-		} else {
-			// We've stopped accessing reactive properties, so tell KeyMetas to stop looking for this watcher
-			this.watcherStack.pop()
-		}
-	}
-}
-
-export { ReactiveProxy, Watcher } 
