@@ -91,7 +91,28 @@ describe('Whole reactive system', function() {
 
 		it(`doesn't get trapped in a loop if it sets a property it watches`)
 
-		it(`can watch a hitherto non-existent property`)
+		it(`can watch a hitherto non-existent property`, function() {
+			let lastVal
+			new Watcher(oldVal => {
+				runCount = runCount + 1
+				lastVal = rProxy.nonExistentKey // Do nothing; simply trigger the Proxy 'get' handler
+			})
+			rProxy.nonExistentKey = 42 // trigger a dependentProcess()
+			assert.strictEqual(lastVal, 42)
+			assert.strictEqual(runCount, 2)
+		})
+
+		it(`the dependentProcess receives its last return output as its own first parameter`, function() {
+			let returnLog = []
+			new Watcher(oldVal => {
+				returnLog.push(oldVal)
+				runCount = runCount + 1
+				rProxy.shallowText // Do nothing; simply trigger the Proxy 'get' handler
+				return runCount + ' runs'
+			})
+			rProxy.shallowText = 'different value'
+			assert.sameDeepOrderedMembers(returnLog, [undefined, '1 runs'])
+		})
 	})
 
 })
