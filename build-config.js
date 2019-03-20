@@ -23,7 +23,7 @@ let isInteger = (string, min, max) => {
 	return (typeof int === 'number' && withinBounds)
 }
 
-let isBoolean = string => (string === 'true') || (string === 'false')
+let isBoolean = string => (string === 'true') || (string === 'false') || Error('Not boolean text')
 
 export const envs = new Enum(['development', 'staging', 'production'])
 
@@ -74,6 +74,9 @@ export const parseConfigs = (defaults = {}) => {
 		} else {
 			throw Error('config.js: LOCAL_SERVER_PORT must be a valid port number')
 		}
+	}
+	if (process.env.TEST_EVERY_CHANGE){
+		envVars.TEST_EVERY_CHANGE = isBoolean(process.env.TEST_EVERY_CHANGE)
 	}
 
 	/*

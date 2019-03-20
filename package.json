@@ -4,8 +4,10 @@
     "node": ">=11"
   },
   "dependencies": {
+    "chai": "^4.2.0",
     "dependency-tree": "^7.0.2",
     "lodash-es": "^4.17.11"
+    "mocha": "^6.0.2"
   },
   "browserslist": [
     "last 3 versions",
@@ -14,7 +16,7 @@
   "scripts": {
     "build": "node -r esm build.js",
     "serve": "live-server dist --port=\"8082\"",
-    "test": "echo \"No tests available yet.\""
+    "test": "mocha -r esm"
   },
   "devDependencies": {
     "autoprefixer": "^9.4.2",
@@ -22,7 +24,7 @@
     "del": "^3.0.0",
     "dotenv": "^6.1.0",
     "eslint": "^5.6.1",
-    "esm": "^3.0.84",
+    "esm": "^3.2.18",
     "gulp": "^4.0.0",
     "gulp-debug": "^4.0.0",
     "gulp-eslint": "^5.0.0",
@@ -45,7 +47,8 @@
     "vinyl": "^2.2.0",
     "vinyl-buffer": "^1.0.1",
     "vinyl-named": "^1.1.0",
-    "vinyl-source-stream": "^2.0.0"
+    "vinyl-source-stream": "^2.0.0",
+    "webpack": "^4.29.6"
   },
   "//a": "This is for the server & client-building code only; browser code is linted in build.js",
   "eslintConfig": {

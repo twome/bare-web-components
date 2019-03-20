@@ -5,11 +5,14 @@ console.info(`Running ${__filename}`)
 const path = require('path')
 const fs = require('fs')
 const { promisify } = require('util')
+const { spawn } = require('child_process')
 
 const readFile = promisify(fs.readFile)
 
 // 3rd-party
 const del = require('del')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
+import webpack from './node_modules/webpack/lib/webpack.js'
 const parcel = require('parcel-bundler')
 const Vinyl = require('vinyl')
 const asyncDone = require('async-done')
@@ -51,7 +54,8 @@ let config = parseConfigs({
 	NODE_ENV: envs.production,
 	LOCAL_SERVER_PORT: 8081,
 	LOCAL_SERVER_HOSTNAME: 'localhost',
-	CSS_SOURCEMAPS: true
+	CSS_SOURCEMAPS: true,
+	TEST_EVERY_CHANGE: false
 })
 
 console.info(`Running in ${config.NODE_ENV.humanName} mode.`)
@@ -109,6 +113,8 @@ let buildConfigDependencies = [
 	p(__dirname, '.env'),
 	p(__dirname, 'package.json')
 ]
+
+let webpackCompiler
 
 /*
 	Tasks
@@ -228,7 +234,47 @@ let dependencyTask = ()=>{
 	// TODO: do a simple filesystem copy of dependencies into <projectroot>/peers
 }
 
-let parcelTask = ()=>{
+let bundleTask = ()=>{
+	webpackCompiler = webpackCompiler || webpack({
+		watch: false,
+		entry: p(paths.js.temp, 'entry.js'),
+		mode: inDev ? 'development' : 'production',
+		output: {
+			path: inDev ? p(paths.js.temp, '/') : p(paths.js.dist, '/'),
+			publicPath: '/',
+			filename: 'bundle.js', //'[name].bundle.[chunkhash].js',
+				library: 'BareLibrary'
+		},
+		target: 'web',
+		stats: 'minimal',
+		/*// What info is included in the stats options provided to use() callback
+			all: false, // Default to exclude
+			// assets: true,
+			// modules: true,
+			// reasons: true,
+			// timings: true,
+			// warnings: true
+		},*/
+		plugins: [
+			// new HtmlWebpackPlugin({template: p(paths.html.temp, 'index.html')})
+		]
+	})
+
+	return new Promise((resolve, reject)=>{
+		webpackCompiler.run((err, stats)=>{
+			if (err) {
+				reject(err) // Handle errors here
+			} else if (stats.hasErrors()){
+				console.error('~~~~~ webpack compilation error:', stats.compilation.errors, '\n\n\n\n\n\n')
+				reject(stats.compilation.errors[0])
+			}
+			console.info('~~~~~ bundled')
+			resolve(stats)
+		})
+	})
+}
+
+/*let bundleTask = ()=>{
 	const entryFiles = [
 		p(paths.html.temp, 'index.html')
 	]
@@ -244,14 +290,14 @@ let parcelTask = ()=>{
 		cacheDir: p(paths.cache, 'parcel')
 	}
 	let bundler = new parcel(entryFiles, options)
-	bundler.on('bundled', ()=>{
-		console.info('~~~ Bundle finished')
-	})
+	// bundler.on('bundled', ()=>{
+	// 	console.info('~~~ Bundle finished')
+	// })
 	
 	let bundle = bundler.bundle()
 
 	return bundle // Promise
-}
+}*/
 
 
 
@@ -286,7 +332,7 @@ let serverTask = () => {
 
 	return new Promise(()=>{ // Will never resolve/reject
 		liveServer.start({
-			root: !inDev ? paths.dist : paths.dist,
+			root: inDev ? paths.temp : paths.dist,
 			host: hostname,
 			port: port,
 			open: false,
@@ -323,6 +369,22 @@ let fontsTask = () => {
 	return gulp.src(p(paths.fonts.src, '**/*'))
 		.pipe(gDebug({ title: 'fonts file to temp', count: false }))
 		.pipe(gulp.dest(paths.fonts.temp))
+}
+
+
+
+let testTask = function() {
+	return new Promise((res, rej) => {
+		let testProcess = spawn('yarn', ['test'])
+		// let resultText = ''
+		testProcess.stderr.on('data', data =>{
+			console.error(data.toString())
+		})
+		testProcess.stdout.on('data', data => {
+			console.info(data.toString())
+		})
+		testProcess.on('close', res)
+	})
 }
 
 
@@ -376,13 +438,19 @@ let htmlWatch = () => {
 		)
 	)
 }
-let parcelWatch = () => {
+let bundleWatch = () => {
 	return gulp.watch(
 		[
 			p(paths.temp, '**/*')
 		],
-		parcelTask
+		bundleTask
 	)
+}
+let testWatch = () => {
+	let paths = [
+		p(paths.temp, '**/*')
+	]
+	return gulp.watch(paths, testTask)
 }
 
 
@@ -400,7 +468,7 @@ let devWorkflow = gulp.series(
 		fontsTask,
 		imagesTask,
 		soundsTask,
-		parcelTask
+		bundleTask
 	),
 	gulp.parallel(
 		cssWatch,
@@ -409,7 +477,7 @@ let devWorkflow = gulp.series(
 		rawWatch,
 		fontsWatch,
 		imagesWatch,
-		parcelWatch,
+		bundleWatch,
 		serverTask
 	),
 )
@@ -425,7 +493,7 @@ let stagingWorkflow = gulp.series(
 	soundsTask,
 	fontsTask,
 	rawTask,
-	parcelTask
+	bundleTask
 )
 
 let productionWorkflow = gulp.series(
@@ -439,7 +507,7 @@ let productionWorkflow = gulp.series(
 	soundsTask,
 	fontsTask,
 	rawTask,
-	parcelTask,
+	bundleTask,
 	forceExit
 )
 
@@ -451,9 +519,10 @@ module.exports['js'] = jsTask
 module.exports['lint'] = lintTask
 module.exports['raw'] = rawTask
 module.exports['images'] = imagesTask
-module.exports['parcel'] = parcelTask
+module.exports['bundle'] = bundleTask
 module.exports['clean'] = cleanTask 
 module.exports['server'] = serverTask 
+module.exports['test'] = testTask 
 
 // TODO
 // module.exports['deploy'] = deployTask 
@@ -464,6 +533,7 @@ module.exports['watch:js'] = jsWatch
 module.exports['watch:html'] = htmlWatch
 module.exports['watch:images'] = imagesWatch
 module.exports['watch:raw'] = rawWatch
+module.exports['watch:test'] = testWatch
 
 // One-command workflows
 module.exports['dev'] = devWorkflow
