@@ -243,7 +243,7 @@ let bundleTask = ()=>{
 			path: inDev ? p(paths.js.temp, '/') : p(paths.js.dist, '/'),
 			publicPath: '/',
 			filename: 'bundle.js', //'[name].bundle.[chunkhash].js',
-				library: 'BareLibrary'
+			library: 'BareLibrary'
 		},
 		target: 'web',
 		stats: 'minimal',

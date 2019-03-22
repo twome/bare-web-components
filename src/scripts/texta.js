@@ -1,5 +1,5 @@
 // import { ReactiveVm } from './reactive-vm'
-import { Watcher } from './reactive-object'
+import { Watcher } from './watcher.js'
 
 // Test UI component that just has a text field
 export class Texta {

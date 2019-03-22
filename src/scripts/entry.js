@@ -1,6 +1,7 @@
 import { registerDOMNodesToCustomEls } from './custom-el-reg.js'
 import { ReactiveVm } from './reactive-vm.js'
-import { Watcher, ReactiveProxy } from './reactive-object.js'
+import { ReactiveProxy } from './reactive-object.js'
+import { Watcher } from './watcher.js'
 import { Texta } from './texta.js'
 
 import { Stack } from './util-iso.js'
@@ -39,12 +40,37 @@ let app = new ReactiveVm({
 	watcherStack: customWatcherStack
 })
 
-let watcher = new Watcher(oldOutput => {
-	let value = objA.aDeeperObject.aNumericalProp
-	console.debug('Watcher noticed a change in the value it was watching!', value)
-}, customWatcherStack)
+let proxy = new ReactiveProxy(objA, customWatcherStack)
 
-// let proxy = new ReactiveProxy(objA)
+let runCount = 0
+let lastVal
+let watcher = new Watcher(oldOutput => {
+	// console.debug('WATCHER PROCESS RUN', oldOutput)
+	runCount = runCount + 1
+	// console.debug('watcher before accessing:', runCount)
+	let value = proxy.unknownProperty
+	value = proxy.unknownProperty
+	value = proxy.unknownProperty
+	value = proxy.unknownProperty
+	value = proxy.unknownProperty
+	lastVal = value
+	console.debug('watcher after accessing:', value, runCount)
+	// if (oldOutput) console.debug('Watcher noticed a change in the value it was watching!', value)
+	return value
+}, customWatcherStack)
+console.debug('*** EXTERNAL runCount and accesses', lastVal, runCount, proxy.unknownProperty, proxy.unknownProperty)
+if (runCount === 1) console.debug('∆∆∆∆∆∆∆ PASSED!!!')
+
+proxy.unknownProperty = 'first'
+console.debug('*** EXTERNAL runCount and accesses',  lastVal, runCount, proxy.unknownProperty, proxy.unknownProperty)
+if (runCount === 2) console.debug('∆∆∆∆∆∆∆ PASSED!!!')
+
+proxy.unknownProperty = 'second'
+console.debug('*** EXTERNAL runCount and accesses',  lastVal, runCount, proxy.unknownProperty, proxy.unknownProperty)
+if (runCount === 3) console.debug('∆∆∆∆∆∆∆ PASSED!!!')
+
+proxy.unknownProperty = 'third'
+
 
 let textaEl = document.querySelector('.texta')
 
@@ -52,6 +78,6 @@ let textaEl = document.querySelector('.texta')
 // app.methods.sayChungus()
 
 // Bind to window for REPL use
-window.r = app
+Object.assign(window, { app, Stack, Watcher, ReactiveProxy, ReactiveVm, Texta })
 
 }) // DOMContentLoaded

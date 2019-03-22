@@ -1,42 +1,33 @@
 import { Stack } from './util-iso.js'
 
 /*
-	dependentProcess(oldOutput): a function which returns a value. This function can *depend on* the properties of a reactive object, and so
-	each time those reactive properties change, this function is run again to "refresh" its output value. This is basically like
-	a "render" function for a template, (and was made for that purpose), but can be used more abstractly.
+	dependentProcess(oldOutput): a function which returns a value. This function can *depend on* the properties of a reactive object, and so each time those reactive properties change, this function is run again to "refresh" its output value. This is basically like a "render" function for a template, (and was made for that purpose), but can be used more abstractly.
 
-	watcherStack: this is a global-like array of potential watchers that are added to each reactive property's *internal* list of
-	subscribers as that reactive property is running its *getter* function. The watcher stack is filled up emphemerally and then 
-	depleted for each individual reactive property.
+	watcherStack: this is a Stack of potential watchers, shared between watchers and KeyMetas, that are added to each reactive property's *internal* list of subscribers as that reactive property is running its *getter* function. The watcher stack is filled up emphemerally and then depleted for each individual reactive property.
 */
 export class Watcher {
-	constructor(dependentProcess, watcherStack){
+	constructor(dependentProcess, stackOfWatchersCurrentlyAccessing){
 		if (!dependentProcess) throw Error('Missing dependentProcess constructor param')
 		this.dependentProcess = dependentProcess
 
-		// Static properties
-		Watcher.stack = Watcher.stack || new Stack()
-		this.watcherStack = watcherStack || Watcher.stack
+		this.stackOfWatchersCurrentlyAccessing = stackOfWatchersCurrentlyAccessing || Watcher.stack
 
-		this.dependentOutput = null
-		this.update() // Runs the process using initial values
+		this.lastOutput = undefined
+		this.update() // Runs the process using initial values, during which process this is registered to all accessed KeyMetas
+		// TODO this is delaying the value the watcher sees by one?
 	}
 
 	update(){
-		const oldOutput = this.dependentOutput
-
-		this.watcherStack.push(this) // We add this watcher as the current target for the active Dep instance
+		this.stackOfWatchersCurrentlyAccessing.push(this) // We add this watcher as the current target for the active Dep instance
 		// Call the dependentProcess, which uses reactive properties to output something (like a component's HTML)
-		this.dependentOutput = this.dependentProcess(oldOutput)
+		console.debug('lastOutput', this.lastOutput)
+		this.lastOutput = this.dependentProcess(this.lastOutput)
+		console.debug('new lastOutput', this.lastOutput)
 
-		if (this.dependentOutput instanceof Promise){
-			this.dependentOutput.then(val => {
-				this.dependentOutput = val
-				this.watcherStack.pop()
-			})
-		} else {
-			// We've stopped accessing reactive properties, so tell KeyMetas to stop looking for this watcher
-			this.watcherStack.pop()
-		}
+		// console.debug('WATCHER: UPDATED', this.stackOfWatchersCurrentlyAccessing)
+		// We've stopped accessing reactive properties, so tell KeyMetas to stop looking for this watcher
+		this.stackOfWatchersCurrentlyAccessing.pop()
+		// console.debug('Watcher stack after popping', this.stackOfWatchersCurrentlyAccessing)
 	}
 }
+Watcher.stack = new Stack() // This will be the pseudo-global "state" shared by KeyMetas and Watchers
