@@ -9,6 +9,8 @@ import throttle from '../../peers/throttle.js'
 	TODO: This basically acts as a factory rather than a normal class
 	instance, because the constructor returns a non-instance object (the user
 	cannot ever access the instance itself with `this`). Should we refactor/rename this?
+
+	TODO: should this just extend the ReactiveProxy Class?
 */
 export class ReactiveVm {
 	constructor({

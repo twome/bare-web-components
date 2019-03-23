@@ -6,16 +6,6 @@ import template from '../../node_modules/lodash-es/template.js'
 import { Stack } from './util-iso.js'
 import { Watcher } from './watcher.js'
 
-// TODO TEMP dev only
-let verbose = 0
-let c = console.debug
-let ce = console.error
-let ci = console.info
-let cw = console.warn
-let info1 = (...args) => { if (verbose >= 1) console.info(...args) } // TODO delete
-let info2 = (...args) => { if (verbose >= 2) console.info(...args) } // TODO delete
-let info3 = (...args) => { if (verbose >= 3) console.info(...args) } // TODO delete
-
 // This is the meta-information for the value of a reactive object's property. It has its own list of Watchers 
 // (much like a Publisher) which it notifies whenever its internal value changes.
 export class KeyMeta {
@@ -28,7 +18,6 @@ export class KeyMeta {
 	}
 
 	set(value){
-		// console.debug('SET', value)
 		this.previousValue = this.value
 		this.value = value
 		this.notifyWatchers()
@@ -38,7 +27,6 @@ export class KeyMeta {
 	// These subscription methods are the important public methods that link the metas and watchers
 	addWatcherToDependants(watcher){
 		if (this.dependants.has(watcher)) return false // This watcher's already registered to this KeyMeta
-		// console.debug('ADDING DEPENDANT:', watcher)
 		// The watcher must make sure it has added itself to the watcher list before trying to 
 		// `get` any reactive properties, if it wants to be automatically registered as a dependency.
 		if (watcher){
@@ -50,20 +38,16 @@ export class KeyMeta {
 
 	// TODO: no use for this yet?
 	unsubscribeWatcher(watcher){
-		// console.debug('UNSUBSCRIBE before:', watcher, this.dependants)
 		this.dependants.remove(watcher)
 	}
 
 	notifyWatchers(){
-		// console.debug('NOTIFY', this.key, this.value, this.dependants)
 		this.dependants.forEach(watcher => {
-			// console.debug('CALLING UPDATE ON WATCHER', watcher, this.key)
 			watcher.update(this)
 		})
 	}
 
 	// get valueNoTrigger(){
-		// console.debug('valueNoTrigger', this.value)
 		// return this.value
 	// }
 }
@@ -94,7 +78,6 @@ export class ReactiveProxy {
 			}
 			if (key.match(/^\$/)){ // Special prefix to make plain objects/functions
 				// TODO - do nothing?
-				// console.debug('plain $ prefix:', key)
 			} else if (Object.isExtensible(child)){
 				// Anything that *can* have properties, we want to shim with a proxy so we can track those properties 
 				// with a KeyMeta
@@ -119,7 +102,6 @@ export class ReactiveProxy {
 						`[]` accessor operator
 						`.` accessor operator
 				*/
-				info3(`TRAP --- get. getting key:`, key, target)
 				let retrievedValue = this.getKeyValue(target, key)
 				return retrievedValue
 			},
@@ -129,9 +111,7 @@ export class ReactiveProxy {
 						`=` operator
 						Array.push()
 				*/
-				// console.debug(`TRAP --- set. setting $key to $value:`, key, value)
 				let meta = this.getMeta(key, target)
-				// console.debug('retreived/created meta is:', meta)
 				this.setKeyValue(target, key, value, meta)
 				return true
 			},
@@ -140,7 +120,6 @@ export class ReactiveProxy {
 					Affects:
 						Object.defineProperty()
 				*/
-				// console.debug('TRAP --- defineProperty. key, descriptor:', key, descriptor)
 				if ('value' in descriptor){ // Data descriptor
 					this.setKeyValue(target, key, descriptor.value, this.getMeta(key, target), descriptor)
 					return true
@@ -160,7 +139,6 @@ export class ReactiveProxy {
 						`delete` operator
 						Array.pop() ?
 				*/
-				// info3('TRAP --- deleteProperty. key:', key)
 				this.deleteKey(target, key, this.getMeta(key, target))
 			}
 		}
@@ -171,7 +149,6 @@ export class ReactiveProxy {
 
 	getMeta(key, target){
 		if (!key) throw Error('[getMeta] Key needed for method .getMeta(key)')
-		// console.debug('getMeta', key)
 
 		let metasKey = key
 
@@ -180,7 +157,6 @@ export class ReactiveProxy {
 			let preexistingMeta = this.metas[metasKey]
 			if (preexistingMeta instanceof KeyMeta){
 				// We've already added a meta for this key
-				// console.debug('preexisting', key)
 				return preexistingMeta
 			} else {
 				// Need this to stop clashing with pre-existing properties of the this.metas object like Array.length or .push()
@@ -208,7 +184,6 @@ export class ReactiveProxy {
 		}
 		
 		let targetVal = target[key]
-		// console.debug('TARGETVAL', targetVal, target)
 
 		this.metas[metasKey].set(targetVal) // Add the real value to the meta
 	}
@@ -216,7 +191,6 @@ export class ReactiveProxy {
 	getKeyValue(target, key){
 		let targetVal = target[key] // Remember, this access could have gone through a proxy before returning to us
 		let keyMeta = this.getMeta(key, target)
-		// console.debug('GETkEYvALUE keymeta, watcherstack, targetVal', keyMeta, this.watcherStackForKeyMetas, targetVal)
 
 		// This kind of situation might happen, eg, with an inbuilt 'length' property for an array that was modified.
 		if (!isEqual(targetVal, keyMeta.value) && typeof targetVal !== 'function'){
@@ -227,19 +201,15 @@ export class ReactiveProxy {
 		if (this.watcherStackForKeyMetas.current){
 			keyMeta.addWatcherToDependants(this.watcherStackForKeyMetas.current)
 		} else {
-			// console.warn(key)
 			// console.warn(`There is no current watcher, yet we're trying to get the ${key}'s value`)
 		}
-		// return keyMeta.value
 		return keyMeta.value
 	}
 
 	setKeyValue(target, key, value, keyMeta, descriptor){
-		// console.debug('SET KEYMETA + KEY VALUE', key, value, keyMeta)
 		let diff = value !== keyMeta.value
 		let bothUndefined = value === undefined && keyMeta.value === undefined
 		if (diff || bothUndefined){ // Prevent unnecessary update runs, but run if this might be the first set of a new property
-			// console.debug('~~~~ qualified for a write')
 			if (Object.isExtensible(value)){
 				value = new ReactiveProxy(value) // We want to recurse to the bottom of the tree before starting to set values
 			}

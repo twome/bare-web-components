@@ -19,15 +19,12 @@ export class Watcher {
 
 	update(){
 		this.stackOfWatchersCurrentlyAccessing.push(this) // We add this watcher as the current target for the active Dep instance
+		
 		// Call the dependentProcess, which uses reactive properties to output something (like a component's HTML)
-		console.debug('lastOutput', this.lastOutput)
 		this.lastOutput = this.dependentProcess(this.lastOutput)
-		console.debug('new lastOutput', this.lastOutput)
 
-		// console.debug('WATCHER: UPDATED', this.stackOfWatchersCurrentlyAccessing)
 		// We've stopped accessing reactive properties, so tell KeyMetas to stop looking for this watcher
 		this.stackOfWatchersCurrentlyAccessing.pop()
-		// console.debug('Watcher stack after popping', this.stackOfWatchersCurrentlyAccessing)
 	}
 }
 Watcher.stack = new Stack() // This will be the pseudo-global "state" shared by KeyMetas and Watchers

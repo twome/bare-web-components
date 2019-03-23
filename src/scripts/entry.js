@@ -21,8 +21,6 @@ let objA = {
 	}
 }
 
-let customWatcherStack = new Stack()
-
 document.addEventListener('DOMContentLoaded', ()=>{
 
 let app = new ReactiveVm({
@@ -37,40 +35,7 @@ let app = new ReactiveVm({
 		// 	return 'sup folks'
 		// }
 	},
-	watcherStack: customWatcherStack
 })
-
-let proxy = new ReactiveProxy(objA, customWatcherStack)
-
-let runCount = 0
-let lastVal
-let watcher = new Watcher(oldOutput => {
-	// console.debug('WATCHER PROCESS RUN', oldOutput)
-	runCount = runCount + 1
-	// console.debug('watcher before accessing:', runCount)
-	let value = proxy.unknownProperty
-	value = proxy.unknownProperty
-	value = proxy.unknownProperty
-	value = proxy.unknownProperty
-	value = proxy.unknownProperty
-	lastVal = value
-	console.debug('watcher after accessing:', value, runCount)
-	// if (oldOutput) console.debug('Watcher noticed a change in the value it was watching!', value)
-	return value
-}, customWatcherStack)
-console.debug('*** EXTERNAL runCount and accesses', lastVal, runCount, proxy.unknownProperty, proxy.unknownProperty)
-if (runCount === 1) console.debug('∆∆∆∆∆∆∆ PASSED!!!')
-
-proxy.unknownProperty = 'first'
-console.debug('*** EXTERNAL runCount and accesses',  lastVal, runCount, proxy.unknownProperty, proxy.unknownProperty)
-if (runCount === 2) console.debug('∆∆∆∆∆∆∆ PASSED!!!')
-
-proxy.unknownProperty = 'second'
-console.debug('*** EXTERNAL runCount and accesses',  lastVal, runCount, proxy.unknownProperty, proxy.unknownProperty)
-if (runCount === 3) console.debug('∆∆∆∆∆∆∆ PASSED!!!')
-
-proxy.unknownProperty = 'third'
-
 
 let textaEl = document.querySelector('.texta')
 
