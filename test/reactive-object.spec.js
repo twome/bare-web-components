@@ -1,23 +1,17 @@
-import { assert } from '../node_modules/chai/chai.js'
-const { Builder, By, Key, until } = require('selenium-webdriver')
+/* global assert */
 
 import { ReactiveProxy } from '../src/scripts/reactive-object.js'
 import { ReactiveVm } from '../src/scripts/reactive-vm.js'
 import { Watcher } from '../src/scripts/watcher.js'
 import { Stack } from '../src/scripts/util-iso.js'
 
+import { deepObject } from './static-data.js'
+
 describe('Whole reactive system', function() {
 	let inputObject
 	let stack
 	before(() => {
-		inputObject = {
-			shallowText: 'text value',
-			arr: [1, 2, 3],
-			obj: {
-				deepText: 'text value of nested property'
-			}
-		}
-
+		inputObject = deepObject
 		stack = new Stack()
 	})
 
@@ -35,7 +29,7 @@ describe('Whole reactive system', function() {
 
 
 		it('gets shallow properties', function() {
-			assert(inputObject.shallowText === new ReactiveProxy(inputObject).shallowText)
+			assert.strictEqual(inputObject.shallowText, new ReactiveProxy(inputObject).shallowText)
 		})
 
 		it('gets deep properties', function() {
@@ -48,7 +42,7 @@ describe('Whole reactive system', function() {
 		it('sets existing properties', function() {
 			let rProxy = new ReactiveProxy(inputObject)
 			rProxy.shallowText = 'new text'
-			assert(rProxy.shallowText === 'new text')
+			assert.strictEqual(rProxy.shallowText, 'new text')
 		})
 
 		it('sets a new property key', function() {
@@ -77,7 +71,7 @@ describe('Whole reactive system', function() {
 
 		it('is notified immediately after construction', function() {
 			new Watcher(oldVal => runCount = runCount + 1)
-			assert(runCount === 1)
+			assert.strictEqual(runCount, 1)
 		})
 
 		it('is notified when a preexisting watched value changes', function() {
@@ -149,71 +143,5 @@ describe('Whole reactive system', function() {
 		})
 
 		it(`doesn't get trapped in a loop if it sets a property it watches`)
-	})
-})
-
-describe('browser dependent tests', function(){
-	this.timeout(30 * 1000)
-	
-	let firefox
-	let chrome
-	before(function(done){
-		firefox = new Builder().forBrowser('firefox').build()
-		Promise.all([firefox/*, chrome*/]).then(arr => {
-			done()
-		}, err => {
-			throw err
-		})
-	})
-
-	beforeEach(function(done) {		
-		firefox.then(driver => {
-			// driver.getWindowHandle().then(windowHandle => {
-				// console.debug({windowHandle})
-			// })
-			
-			console.debug('attempting refresh')
-			// console.debug(driver.sendKeys(Key.F5))
-			driver.get('http://localhost:8081').then(val => {
-
-				driver.findElement(By.tagName('input'))
-					.then(inputEl => {
-						inputEl.sendKeys('i am writing from webdriver', Key.RETURN)
-						console.debug('done inputting!')
-					})
-
-				// 	console.debug('find element worked!')
-				// 	driver.wait(until.titleIs('webdriver - Google Search'), 1000).then(val => {
-				// 		console.debug('waiting for title worked!')
-				// 	})
-				// })
-
-				setTimeout(done, 5000)
-			})
-		
-		})
-	})
-
-	describe('ReactiveVM', function() {
-		describe('construction', function() {
-			it('throws construction if missing data:Object or el:HTMLElement args', function(done) {
-				setTimeout(function() {
-					done()
-				}, 5000)
-				// console.debug('vm construction test')
-				// let vmo = new ReactiveVm({
-				// 	data: inputObject,
-				// 	el: document.querySelector('[data-vm-target]')
-				// })
-			})
-		})
-	})
-
-	after(function() {
-		firefox.then(driver => {
-			driver.quit().then(()=>{ 
-				console.info('Browser closed.') 
-			})
-		})
 	})
 })
