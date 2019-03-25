@@ -16,7 +16,7 @@
   "scripts": {
     "build": "node -r esm build.js",
     "serve": "live-server dist --port=\"8082\"",
-    "test": "mocha -r esm"
+    "test": "node -r esm ./test.js"
   },
   "devDependencies": {
     "autoprefixer": "^9.4.2",
@@ -36,6 +36,7 @@
     "gulp-template": "^5.0.0",
     "html-webpack-plugin": "^3.2.0",
     "live-server": "^1.2.1",
+    "mochawesome": "^3.1.1",
     "parcel-bundler": "^1.10.3",
     "postcss-import": "^12.0.1",
     "postcss-modules": "^1.4.1",

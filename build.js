@@ -72,6 +72,9 @@ let makeGulpStream = (fileName)=>{
 
 // Build-process config
 let paths = {
+	nodeModules: p(__dirname, 'node_modules'),
+	tests: p(__dirname, 'test'),
+
 	// Non-source / machine output:
 	cache: p(__dirname, '.cache'),
 	temp: p(__dirname, '.tmp'), // Where we send the pre-processed site before bundling with Parcel. Dev server should be able to run here.

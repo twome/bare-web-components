@@ -1,0 +1,12 @@
+.SandboxArea {
+	font-family: sans-serif;
+	max-width: 45em;
+	margin: 0 auto;	
+}
+
+.Sandbox {
+	min-height: 4em;
+	min-width: 8em;
+	border: 5px solid red;
+}
+

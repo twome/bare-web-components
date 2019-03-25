@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mocha Tests</title>
+  
+  <!-- Include Mocha CSS styles -->
+  <link rel="stylesheet" href="/n/mocha/mocha.css">
+  <link rel="stylesheet" href="./browser-test-output.css">
+</head>
+
+<body>
+	<!-- This is the ID mocha.js will render output to. -->
+	<div id="mocha"></div>
+	
+	<!-- Our custom element for putting testing DOM content into. -->
+	<div class="SandboxArea">
+		<h3>Sandbox</h3>
+		<div id="sandbox" class="Sandbox"></div>	
+	</div>
+	
+
+	<!-- Import the actual tests -->
+	<script type="module" src="/test/in-browser.js"></script>
+</body>
+</html>
