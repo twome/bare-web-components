@@ -69,6 +69,14 @@ let makeGulpStream = (fileName)=>{
 	// This is an empty stream; use the .write(contents) and then .end() methods to use it.
 	return vinylSourceStream(fileName).pipe(vinylBuffer())
 }
+const restartProcess = () => {
+	console.info('Attempting to restart process...')
+	spawn(process.argv[1], process.argv.slice(2), {
+		detached: true,
+		stdio: 'inherit'
+	}).unref()
+	process.exit()
+}
 
 // Build-process config
 let paths = {
@@ -93,7 +101,8 @@ let paths = {
 	},
 	js: {
 		src: p(__dirname, 'src/scripts'),
-		temp: p(__dirname, '.tmp/scripts')
+		temp: p(__dirname, '.tmp/scripts'),
+		prebundle: p(__dirname, '.tmp/prebundle')
 	},
 	images: {
 		src: p(__dirname, 'src/images'),
@@ -223,7 +232,7 @@ let lintTask = () => gulp.src([
 
 let jsTask = () => {
 	return gulp.src(p(paths.js.src, '**/*.js'))
-		.pipe(gulp.dest(paths.js.temp))	
+		.pipe(gulp.dest(paths.js.prebundle))
 }
 
 // TODO
@@ -240,10 +249,10 @@ let dependencyTask = ()=>{
 let bundleTask = ()=>{
 	webpackCompiler = webpackCompiler || webpack({
 		watch: false,
-		entry: p(paths.js.temp, 'entry.js'),
+		entry: p(paths.js.prebundle, 'entry.js'),
 		mode: inDev ? 'development' : 'production',
 		output: {
-			path: inDev ? p(paths.js.temp, '/') : p(paths.js.dist, '/'),
+			path: inDev ? p(paths.js.temp) : p(paths.dist, '/scripts/'),
 			publicPath: '/',
 			filename: 'bundle.js', //'[name].bundle.[chunkhash].js',
 			library: 'BareLibrary'
@@ -446,8 +455,15 @@ let bundleWatch = () => {
 		[
 			p(paths.temp, '**/*')
 		],
+		// {
+		// 	ignoreInitial: false // Run at startup
+		// },
 		bundleTask
 	)
+	// watcher.on('change', (path, stats) => {
+	// 	console.debug('path changed: ', path)
+	// })
+	// return watcher
 }
 let testWatch = () => {
 	let paths = [
@@ -470,9 +486,9 @@ let devWorkflow = gulp.series(
 		rawTask,
 		fontsTask,
 		imagesTask,
-		soundsTask,
-		bundleTask
+		soundsTask
 	),
+	bundleTask,
 	gulp.parallel(
 		cssWatch,
 		jsWatch,
@@ -554,7 +570,7 @@ module.exports['default'] = envToWorkflowsMap[config.NODE_ENV.humanName]
 // Automatically end the build process if any of its dependencies change
 gulp.watch(buildConfigDependencies, ()=>{
 	console.error(`[buildfile] One of the configuration files the buildfile depends on has changed; ending.`)
-	process.kill(process.pid, 'SIGINT')
+	restartProcess()
 })
 
 
