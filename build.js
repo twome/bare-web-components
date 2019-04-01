@@ -19,6 +19,7 @@ const asyncDone = require('async-done')
 import template from './node_modules/lodash-es/template.js'
 const liveServer = require('live-server')
 const dependencyTree = require('dependency-tree')
+const chokidar = require('chokidar')
 
 // ## Gulp & plugins
 const gulp = require('gulp')
@@ -46,6 +47,7 @@ console.info('Module imports finished.')
 
 // In-house
 const { parseConfigs, envs } = require('./build-config.js')
+const { liveReloadServerStart } = require('./peers/src-change-reload/live-reload-custom-server.js')
 import throttle from './peers/throttle.js'
 
 // Parse environment variable & command-line config settings into a config object (passing in app defaults)
@@ -72,7 +74,7 @@ let makeGulpStream = (fileName)=>{
 const restartProcess = () => {
 	console.info('Attempting to restart process...')
 	spawn(process.argv[1], process.argv.slice(2), {
-		detached: true,
+		detached: true, 
 		stdio: 'inherit'
 	}).unref()
 	process.exit()
@@ -232,7 +234,7 @@ let lintTask = () => gulp.src([
 
 let jsTask = () => {
 	return gulp.src(p(paths.js.src, '**/*.js'))
-		.pipe(gulp.dest(paths.js.prebundle))
+		.pipe(gulp.dest(paths.js.prebundle))	
 }
 
 // TODO
@@ -286,33 +288,6 @@ let bundleTask = ()=>{
 	})
 }
 
-/*let bundleTask = ()=>{
-	const entryFiles = [
-		p(paths.html.temp, 'index.html')
-	]
-	const options = {
-		outDir: paths.dist,
-		publicUrl: '/',
-		hmr: false,
-		// global: 'parcelGlobalNamespace',
-		// watch: false,
-		contentHash: !inDev,
-		minify: !inDev,
-		production: !inDev, // TODO: what does this do exactly?
-		cacheDir: p(paths.cache, 'parcel')
-	}
-	let bundler = new parcel(entryFiles, options)
-	// bundler.on('bundled', ()=>{
-	// 	console.info('~~~ Bundle finished')
-	// })
-	
-	let bundle = bundler.bundle()
-
-	return bundle // Promise
-}*/
-
-
-
 
 
 let imagesTask = () => {
@@ -343,15 +318,39 @@ let serverTask = () => {
 	console.info(`Starting local server at ${hostname ? hostname : ''}:${port}`)
 
 	return new Promise(()=>{ // Will never resolve/reject
-		liveServer.start({
-			root: inDev ? paths.temp : paths.dist,
-			host: hostname,
-			port: port,
-			open: false,
-			logLevel: 2
-		})	
+	
+		let server = liveReloadServerStart({
+			publicRoot: paths.temp,
+			port,
+			hostname
+		})
+
 	})
 }
+
+// let serverTask = () => {
+// 	let port = config.LOCAL_SERVER_PORT
+// 	let hostname = config.LOCAL_SERVER_HOSTNAME
+
+// 	console.info(`Starting local server at ${hostname ? hostname : ''}:${port}`)
+
+// 	return new Promise(()=>{ // Will never resolve/reject
+// 		liveServer.start({
+// 			root: inDev ? paths.temp : paths.dist,
+// 			host: hostname,
+// 			port: port,
+// 			open: false,
+// 			logLevel: 2,
+// 			wait: 100
+// 			// middleware: [
+// 			// 	(req, res, next) => {
+// 			// 		console.debug('req', req.url)
+// 			// 		next()
+// 			// 	}
+// 			// ]
+// 		})	
+// 	})
+// }
 
 
 
