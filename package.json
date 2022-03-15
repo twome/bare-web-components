@@ -6,7 +6,7 @@
   "dependencies": {
     "chai": "^4.2.0",
     "dependency-tree": "^7.0.2",
-    "lodash-es": "^4.17.11",
+    "lodash-es": "^4.17.21",
     "mocha": "^6.0.2"
   },
   "browserslist": [
